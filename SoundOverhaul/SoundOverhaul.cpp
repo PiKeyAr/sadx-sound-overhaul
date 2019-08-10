@@ -7,12 +7,13 @@ FunctionPointer(void, sub_4EC310, (int a2), 0x4EC310);
 FunctionPointer(ObjectMaster*, sub_64FD00, (int a1, int a2, int a3), 0x64FD00);
 FunctionPointer(void, sub_42FE00, (ObjectMaster *a1, NJS_ACTION *a2, NJS_TEXLIST *a3, float a4, char a5, char a6), 0x42FE00);
 FunctionPointer(void, sub_4314D0, (int a1), 0x4314D0);
+FunctionPointer(void, OErupt_PlaySound, (int a1, int a2, int a3, int a4, int a5, EntityData1 *a6), 0x424880);
+
 DataPointer(CollisionData, stru_E94844, 0xE94844);
 DataPointer(int, FramerateSetting_Config, 0x0089295C);
 DataPointer(int, FramerateSetting, 0x0389D7DC);
-
+DataPointer(int, SoundQueueThing, 0x004250AE);
 static bool SnowSoundFixed = false;
-static int SoundQueueThing = 120;
 
 void __cdecl sub_4EC370(ObjectMaster *a1) //Ice Cap bomber
 {
@@ -94,6 +95,12 @@ void PlayCharacterHurtVoice(int ID, void *a2, int a3, void *a4)
 	}
 }
 
+void DolphinSoundFix(int a1, int a2, int a3, int a4, int a5, EntityData1 *a6)
+{
+	if (FramerateSetting >= 2) OErupt_PlaySound(a1, a2, a3, a4, a5, a6);
+	else OErupt_PlaySound(a1, a2, a3, a4, a5 * 2, a6);
+}
+
 extern "C"
 {
 	__declspec(dllexport) void __cdecl Init()
@@ -102,7 +109,6 @@ extern "C"
 		WriteCall((void*)0x004507FA, PlayCharacterHurtVoice); //Makes Sonic and Gamma play hurt sounds
 		WriteCall((void*)0x006CE25C, WhoahSomethingBuggingYou); //Load the player soundbanks to play the "whoah!" voice when Knuckles attacks Sonic/Tails
 		//Various sound cutoff fixes
-		WriteData((int*)0x004250AE, SoundQueueThing); //Fixes the QueueSoundAtPosition function to work properly at 60 FPS
 		WriteCall((void*)0x00496F33, PlaySpindash); //Prevent the cutoff of the spindash (supposed to fade out but it's broken in SADX)
 		WriteJump((void*)0x004EC370, sub_4EC370); //Ice Cap bomber 1
 		WriteCall((void*)0x004EC573, PlayBomb); //Ice Cap bomber 2
@@ -113,6 +119,7 @@ extern "C"
 		WriteData<1>((char*)0x006CE07B, 0i8); //There's no landing gear in this mode!
 		WriteData<1>((char*)0x006CA530, 0x34); //Goin' down! Aaaah! Look out below!
 		WriteCall((void*)0x006E96B9, TailsWhatAmIGonnaDoWithYou);
+		WriteCall((void*)0x004FADCF, DolphinSoundFix);
 		//Missing soundbank sounds fixes
 		SoundLists[35] = E101mkIISoundList;
 		SoundLists[37] = FinalEggSoundList; //Final Egg
@@ -126,7 +133,14 @@ extern "C"
 	{
 		auto entity = EntityData1Ptrs[0];
 		//Sound queue framerate fix
-		if (FramerateSetting >= 2) SoundQueueThing = 120; else SoundQueueThing = 240;
+		if (FramerateSetting >= 2 && SoundQueueThing != 120)
+		{
+			WriteData((int*)0x004250AE, 120); //Fixes the QueueSoundAtPosition function to work properly at 60 FPS
+		}
+		if (FramerateSetting < 2 && SoundQueueThing == 120)
+		{
+			WriteData((int*)0x004250AE, 240); //Fixes the QueueSoundAtPosition function to work properly at 60 FPS
+		}
 		//Ice Cap/Sand Hill thing
 		if (CurrentLevel != 8 || CurrentAct != 2 || GameState == 3 || GameState == 4 || GameState == 7 || GameState == 21) SnowSoundFixed = false;
 		if (entity != nullptr)
