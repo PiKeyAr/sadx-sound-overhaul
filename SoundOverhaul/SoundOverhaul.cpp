@@ -1,15 +1,14 @@
 #include <SADXModLoader.h>
 
 FunctionPointer(Sint32, sub_424FC0, (int a1, EntityData1 *a2, int a3, int a4, float x, float y, float z), 0x424FC0);
-FunctionPointer(ObjectMaster*, sub_4F5E50, (int a1), 0x4F5E50);
-FunctionPointer(void, sub_4EC2E0, (ObjectMaster *), 0x4EC2E0);
-FunctionPointer(void, sub_4EC310, (int a2), 0x4EC310);
+FunctionPointer(ObjectMaster*, LoadIceCapBomb, (NJS_VECTOR *a1), 0x4F5E50);
+FunctionPointer(void, IceCapBomber_Main, (ObjectMaster *), 0x4EC2E0);
+FunctionPointer(void, IceCapBomber_Display, (ObjectMaster *a1), 0x4EC310);
 FunctionPointer(ObjectMaster*, sub_64FD00, (int a1, int a2, int a3), 0x64FD00);
 FunctionPointer(void, sub_42FE00, (ObjectMaster *a1, NJS_ACTION *a2, NJS_TEXLIST *a3, float a4, char a5, char a6), 0x42FE00);
 FunctionPointer(void, sub_4314D0, (int a1), 0x4314D0);
 FunctionPointer(void, OErupt_PlaySound, (int a1, int a2, int a3, int a4, int a5, EntityData1 *a6), 0x424880);
-
-DataPointer(CollisionData, stru_E94844, 0xE94844);
+FunctionPointer(Sint32, QueueSoundAtPosition, (int sound_id, EntityData1 *a2, int a3, int a4, float x, float y, float z), 0x424FC0);
 DataPointer(int, FramerateSetting_Config, 0x0089295C);
 DataPointer(int, FramerateSetting, 0x0389D7DC);
 DataPointer(int, SoundQueueThing, 0x004250AE);
@@ -22,16 +21,16 @@ void __cdecl sub_4EC370(ObjectMaster *a1) //Ice Cap bomber
 	v1 = a1->Data1;
 	if (v1->Position.y <= (double)*(float *)&v1->CharIndex)
 	{
-		PlaySound(233, 0, 0, 0);
-		sub_4F5E50((int)&v1->Position);
+		QueueSoundAtPosition(233, v1, 0, 96, v1->Position.x, v1->Position.y, v1->Position.z);
+		LoadIceCapBomb(&v1->Position);
 		RumbleA(0, 0);
 		*(short*)&v1->Object = 40;
-		Collision_Init(a1, &stru_E94844, 1, 4u);
-		a1->MainSub = sub_4EC2E0;
+		Collision_Init(a1, (CollisionData*)0xE94844, 1, 4u);
+		a1->MainSub = IceCapBomber_Main;
 		a1->DisplaySub = 0;
 	}
-	sub_4EC310((int)a1);
-	v1->Position.y = v1->Position.y - 10.0;
+	IceCapBomber_Display(a1);
+	v1->Position.y = v1->Position.y - 10.0f;
 }
 
 void PlayBomb()
