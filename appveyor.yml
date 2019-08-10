@@ -14,7 +14,6 @@ configuration: Release
 clone_depth: 1
 
 cache:
-- C:\SoundOverhaul\system
 - C:\mod-manifest-gen.exe
 
 init:
