@@ -8,7 +8,7 @@ To install Sound Overhaul 2 you can use SADX Mod Installer that sets up SADX Mod
 
 Alternatively you could install Sound Overhaul 2 manually by downloading the latest AppVeyor development build from the link below.
 
-**Latest development build:** https://ci.appveyor.com/api/projects/PiKeyAr/sadx-sound-overhaul/artifacts/Release/SoundOverhaul.7z
+**Latest development build:** https://ci.appveyor.com/api/projects/PiKeyAr/sadx-sound-overhaul/artifacts/bin/SoundOverhaul.7z
 
 Developer's Twitter: https://twitter.com/pkr_sadx
 
