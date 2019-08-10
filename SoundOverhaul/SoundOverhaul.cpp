@@ -134,7 +134,7 @@ extern "C"
 		//Sound queue framerate fix
 		if (FramerateSetting >= 2 && SoundQueueThing != 120)
 		{
-			WriteData((int*)0x004250AE, 120); //Fixes the QueueSoundAtPosition function to work properly at 60 FPS
+			WriteData((int*)0x004250AE, 120); //Fixes the QueueSoundAtPosition function to work properly at 30 FPS
 		}
 		if (FramerateSetting < 2 && SoundQueueThing == 120)
 		{
