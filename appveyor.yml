@@ -33,11 +33,11 @@ build:
   project: sadx-sound-overhaul.sln
   
 after_build:
-- cmd: copy C:\projects\sadx-sound-overhaul\Release\SoundOverhaul.dll C:\SoundOverhaul\SoundOverhaul.dll
+- cmd: copy C:\projects\sadx-sound-overhaul\bin\SoundOverhaul.dll C:\SoundOverhaul\SoundOverhaul.dll
 - ps: $MyProcess = Start-Process "C:\mod-manifest-gen.exe" -Wait -PassThru -ArgumentList "C:\SoundOverhaul"
 - cmd: cd C:\
 - cmd: 7z a SoundOverhaul.7z SoundOverhaul
-- cmd: move SoundOverhaul.7z C:\projects\sadx-sound-overhaul\Release\SoundOverhaul.7z
+- cmd: move SoundOverhaul.7z C:\projects\sadx-sound-overhaul\bin\SoundOverhaul.7z
 
 artifacts:
-- path: Release\SoundOverhaul.7z
+- path: bin\SoundOverhaul.7z
