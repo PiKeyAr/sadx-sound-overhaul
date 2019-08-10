@@ -8,8 +8,11 @@ FunctionPointer(ObjectMaster*, sub_64FD00, (int a1, int a2, int a3), 0x64FD00);
 FunctionPointer(void, sub_42FE00, (ObjectMaster *a1, NJS_ACTION *a2, NJS_TEXLIST *a3, float a4, char a5, char a6), 0x42FE00);
 FunctionPointer(void, sub_4314D0, (int a1), 0x4314D0);
 DataPointer(CollisionData, stru_E94844, 0xE94844);
+DataPointer(int, FramerateSetting_Config, 0x0089295C);
+DataPointer(int, FramerateSetting, 0x0389D7DC);
 
 static bool SnowSoundFixed = false;
+static int SoundQueueThing = 120;
 
 void __cdecl sub_4EC370(ObjectMaster *a1) //Ice Cap bomber
 {
@@ -48,11 +51,6 @@ SoundFileInfo E101mkIISoundList_list[] = {
 	{ 5, "" }
 };
 
-SoundFileInfo soundlist97_list[] = {
-	{ 6, "E_00BF" }
-};
-
-
 SoundFileInfo FinalEggSoundList_list[] = {
 	{ 0, "COMMON_BANK00" },
 	{ 1, "FINAL_EGG_BANK01" },
@@ -68,45 +66,68 @@ void TailsWhatAmIGonnaDoWithYou()
 
 SoundList FinalEggSoundList = { arraylengthandptr(FinalEggSoundList_list) };
 SoundList E101mkIISoundList = { arraylengthandptr(E101mkIISoundList_list) };
-SoundList soundlist97 = { arraylengthandptr(soundlist97_list) };
 
 void WhoahSomethingBuggingYou()
 {
 	if (VoiceLanguage)
 	{
-	LoadSoundList(70);
-	LoadSoundList(72);
+		LoadSoundList(70);
+		LoadSoundList(72);
 	}
 	else
 	{
-	LoadSoundList(69);
-	LoadSoundList(71);
+		LoadSoundList(69);
+		LoadSoundList(71);
+	}
+}
+
+void PlayCharacterHurtVoice(int ID, void *a2, int a3, void *a4)
+{
+	PlaySound(ID, a2, a3, a4);
+	if ( GetCurrentCharacterID() == Characters_Gamma )
+	{
+		PlaySound(1431, 0, 0, 0);
+	}
+	else
+	{
+		PlaySound(23, 0, 0, 0);
 	}
 }
 
 extern "C"
 {
-	__declspec(dllexport) ModInfo SADXModInfo = { ModLoaderVer };
 	__declspec(dllexport) void __cdecl Init()
 	{
-		WriteCall((void*)0x006CE25C, WhoahSomethingBuggingYou);
-		WriteCall((void*)0x00496F33, PlaySpindash);
+		//Missing sound fixes
+		WriteCall((void*)0x004507FA, PlayCharacterHurtVoice); //Makes Sonic and Gamma play hurt sounds
+		WriteCall((void*)0x006CE25C, WhoahSomethingBuggingYou); //Load the player soundbanks to play the "whoah!" voice when Knuckles attacks Sonic/Tails
+		//Various sound cutoff fixes
+		WriteData((int*)0x004250AE, SoundQueueThing); //Fixes the QueueSoundAtPosition function to work properly at 60 FPS
+		WriteCall((void*)0x00496F33, PlaySpindash); //Prevent the cutoff of the spindash (supposed to fade out but it's broken in SADX)
 		WriteJump((void*)0x004EC370, sub_4EC370); //Ice Cap bomber 1
 		WriteCall((void*)0x004EC573, PlayBomb); //Ice Cap bomber 2
 		WriteCall((void*)0x005ECB4F, PlaySound2); //Go up! Full speed ahead!
-		WriteData<2>((void*)0x0053881F, 0x90u); // Enable ambient sound in MR Final Egg base
-		WriteData<1>((char*)0x00571AAF, 0x08); // Fix Egg Hornet sound loop
-		WriteData<1>((char*)0x006AF86B, 0i8); // I forgot to put in the landing gear!
-		WriteData<1>((char*)0x006CE07B, 0i8); // There's no landing gear in this mode!
+		WriteData<2>((void*)0x0053881F, 0x90u); //Enable ambient sound in MR Final Egg base
+		WriteData<1>((char*)0x00571AAF, 0x08); //Fix Egg Hornet sound loop
+		WriteData<1>((char*)0x006AF86B, 0i8); //I forgot to put in the landing gear!
+		WriteData<1>((char*)0x006CE07B, 0i8); //There's no landing gear in this mode!
 		WriteData<1>((char*)0x006CA530, 0x34); //Goin' down! Aaaah! Look out below!
 		WriteCall((void*)0x006E96B9, TailsWhatAmIGonnaDoWithYou);
-		*(SoundList*)0x90FDD0 = E101mkIISoundList;
-		*(SoundList*)0x90FFB8 = soundlist97;
-		*(SoundList*)0x90FDE0 = FinalEggSoundList;
+		//Missing soundbank sounds fixes
+		SoundLists[35] = E101mkIISoundList;
+		SoundLists[37] = FinalEggSoundList; //Final Egg
+		//Cutscene soundbank fixes
+		WriteData<1>((char*)0x0066DC76, 111); //Gamma steals Froggy
+		WriteData<1>((char*)0x006A40C8, 108); //Amy talking to Gamma (Amy's story)
+		WriteData<1>((char*)0x00677F8B, 108); //Amy talking to Gamma (Gamma's story)
 	}
+
 	__declspec(dllexport) void __cdecl OnFrame()
 	{
 		auto entity = EntityData1Ptrs[0];
+		//Sound queue framerate fix
+		if (FramerateSetting >= 2) SoundQueueThing = 120; else SoundQueueThing = 240;
+		//Ice Cap/Sand Hill thing
 		if (CurrentLevel != 8 || CurrentAct != 2 || GameState == 3 || GameState == 4 || GameState == 7 || GameState == 21) SnowSoundFixed = false;
 		if (entity != nullptr)
 		{
@@ -121,4 +142,6 @@ extern "C"
 			}
 		}
 	}
+
+	__declspec(dllexport) ModInfo SADXModInfo = { ModLoaderVer };
 }
