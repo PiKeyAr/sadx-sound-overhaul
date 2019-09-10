@@ -1,4 +1,5 @@
 #include <SADXModLoader.h>
+#include "IniFile.hpp"
 #include "Trampoline.h"
 
 struct SoundEntry
@@ -31,6 +32,8 @@ DataPointer(int, FramerateSetting, 0x0389D7DC);
 DataPointer(int, SoundQueueThing, 0x004250AE);
 DataArray(SoundEntry, SoundQueue, 0x3B292F8, 100);
 static bool SnowSoundFixed = false;
+
+bool BoaBoaFix = true;
 
 SoundFileInfo E101mkIISoundList_list[] = {
 	{ 0, "COMMON_BANK00" },
@@ -120,8 +123,8 @@ int BoaFix(int ID, EntityData1 *entity, int index, int volume, float x, float y,
 	SoundQueue[v4].Flags = 0x111;
 	SoundQueue[v4].SoundID = ID;
 	SoundQueue[v4].Whatever = 0;
-	SoundQueue[v4].VolumeA = volume;
-	SoundQueue[v4].VolumeB = 0;
+	SoundQueue[v4].VolumeA = -50;
+	SoundQueue[v4].VolumeB = -80;
 	SoundQueue[v4].null = 0;
 	SoundQueue[v4].origin.x = x;
 	SoundQueue[v4].origin.y = y;
@@ -129,11 +132,25 @@ int BoaFix(int ID, EntityData1 *entity, int index, int volume, float x, float y,
 	return 1;
 }
 
+/*
+static void PlaySound2_r(int ID, void *entity, int index, int volume);
+static Trampoline PlaySound2_t(0x423E20, 0x423E25, PlaySound2_r);
+static void __cdecl PlaySound2_r(int ID, void *entity, int index, int volume)
+{
+	auto original = reinterpret_cast<decltype(PlaySound2_r)*>(PlaySound2_t.Target());
+	original(ID, entity, index, volume);
+	if ((int)entity == 0xFFFFFFFF) original(ID, entity, index, volume);
+}*/
+
 extern "C"
 {
-	__declspec(dllexport) void __cdecl Init()
+	__declspec(dllexport) void __cdecl Init(const char* path, const HelperFunctions &helperFunctions)
 	{
-		WriteCall((void*)0x79FCE4, BoaFix); //Recreate a "bug" from the DC version to create deeper sound
+		//Load config stuff
+		//Config stuff
+		const IniFile *config = new IniFile(std::string(path) + "\\config.ini");
+		BoaBoaFix = config->getBool("General", "BoaBoaFix", true);
+		if (BoaBoaFix) WriteCall((void*)0x79FCE4, BoaFix); //Recreate a "bug" from the DC version to make it play multiple times
 		WriteData<1>((char*)0x42508D, 0x11u); //Fix for sounds playing multiple times over
 		WriteCall((void*)0x57B00C, EggWalkerMissileFix); //Missing entity fix
 		//Missing sound fixes
