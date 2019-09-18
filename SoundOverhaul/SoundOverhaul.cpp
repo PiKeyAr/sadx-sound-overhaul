@@ -2,17 +2,34 @@
 #include "IniFile.hpp"
 #include "Trampoline.h"
 
+//00423CD0 write 44AC0000 instead of 22560000 when moving to 44100hz sounds
+
+enum SoundFlags
+{
+	SoundFlags_Repeat = 0x1,
+	SoundFlags_Positional_AB = 0x100, //Use Volume A and B
+	SoundFlags_Positional_A = 0x200, //Use Volume A only
+	SoundFlags_Pan = 0x800,
+	SoundFlags_Pitch = 0x2000,
+	SoundFlags_No3D = 0x20,
+	SoundFlags_3D = 0x4000,
+	SoundFlags_3D_A = 0x10,
+	SoundFlags_3D_B = 0x1000,
+	SoundFlags_Unknown_A = 0x2,
+	SoundFlags_Unknown_B = 0x40,
+};
+
 struct SoundEntry
 {
 	int MaxIndex; //Maximum index? Can be 0xFFFFFFFF
 	int PlayLength; //0xFFFFFFFF to loop indefinitely
 	void *SourceEntity; //Sound stops when entity is destroyed
-	int Flags; //3D sound related, ANDs with 1, 10, 100, 200, 800, 2000, 4000, 0x11 in PlaySound2, 0x801 in PlaySound, | 0x10 in DualEntity, 
+	SoundFlags Flags; //3D sound related, ANDs with 1, 10, 100, 200, 800, 2000, 4000, 0x11 in PlaySound2, 0x801 in PlaySound, | 0x10 in DualEntity, 
 	int SoundID;
-	int Whatever; //Only used in PlaySound which sets it to 0x00000008
+	int Panning;
 	int VolumeA;
 	int VolumeB;
-	int null; //Always 0
+	int PitchShift;
 	NJS_VECTOR origin;
 	int NoIndex; //Only used when a free index can't be found (set to 0xFFFFFFFF)
 	float null_2; //Unused
@@ -120,34 +137,73 @@ int BoaFix(int ID, EntityData1 *entity, int index, int volume, float x, float y,
 	SoundQueue[v4].SourceEntity = entity;
 	SoundQueue[v4].PlayLength = 120;
 	SoundQueue[v4].MaxIndex = -1;
-	SoundQueue[v4].Flags = 0x111;
+	SoundQueue[v4].Flags = (SoundFlags)0x111;
 	SoundQueue[v4].SoundID = ID;
-	SoundQueue[v4].Whatever = 0;
+	SoundQueue[v4].Panning = 0;
 	SoundQueue[v4].VolumeA = -50;
 	SoundQueue[v4].VolumeB = -80;
-	SoundQueue[v4].null = 0;
+	SoundQueue[v4].PitchShift = 0;
 	SoundQueue[v4].origin.x = x;
 	SoundQueue[v4].origin.y = y;
 	SoundQueue[v4].origin.z = z;
 	return 1;
 }
 
-/*
-static void PlaySound2_r(int ID, void *entity, int index, int volume);
-static Trampoline PlaySound2_t(0x423E20, 0x423E25, PlaySound2_r);
-static void __cdecl PlaySound2_r(int ID, void *entity, int index, int volume)
+int CustomSound(int ID, EntityData1 *entity, int index, int volume, float x, float y, float z)
 {
-	auto original = reinterpret_cast<decltype(PlaySound2_r)*>(PlaySound2_t.Target());
-	original(ID, entity, index, volume);
-	if ((int)entity == 0xFFFFFFFF) original(ID, entity, index, volume);
-}*/
+	Sint32 v4; // eax
+	Sint32 v6; // eax
+	int v7; // ecx
+	v4 = SoundQueue_GetFreeIndex(index);
+	if (v4 < 0)
+	{
+		return -1;
+	}
+	SoundQueue[v4].SourceEntity = entity;
+	SoundQueue[v4].PlayLength = 40;
+	SoundQueue[v4].MaxIndex = -1;
+	SoundQueue[v4].Flags = (SoundFlags)0x201;
+	SoundQueue[v4].SoundID = ID;
+	SoundQueue[v4].Panning = 0;
+	SoundQueue[v4].VolumeA = volume;
+	SoundQueue[v4].VolumeB = volume;
+	SoundQueue[v4].PitchShift = 0;
+	SoundQueue[v4].origin.x = x;
+	SoundQueue[v4].origin.y = y;
+	SoundQueue[v4].origin.z = z;
+	return 1;
+}
+
+int QueueBullet(int sound_id, EntityData1 *entity, int min_index, int volume, float x, float y, float z)
+{
+	Sint32 v4; // eax
+	Sint32 v6; // eax
+	int v7; // ecx
+	v4 = SoundQueue_GetFreeIndex(min_index);
+	if (v4 < 0)
+	{
+		return -1;
+	}
+	SoundQueue[v4].SourceEntity = entity;
+	SoundQueue[v4].PlayLength = 120;
+	SoundQueue[v4].MaxIndex = -1;
+	SoundQueue[v4].Flags = (SoundFlags)0x111;
+	SoundQueue[v4].SoundID = sound_id;
+	SoundQueue[v4].Panning = 0;
+	SoundQueue[v4].VolumeA = volume;
+	SoundQueue[v4].VolumeB = volume;
+	SoundQueue[v4].PitchShift = 0;
+	SoundQueue[v4].origin.x = x;
+	SoundQueue[v4].origin.y = y;
+	SoundQueue[v4].origin.z = z;
+	return 1;
+}
 
 extern "C"
 {
 	__declspec(dllexport) void __cdecl Init(const char* path, const HelperFunctions &helperFunctions)
 	{
 		//Load config stuff
-		//Config stuff
 		const IniFile *config = new IniFile(std::string(path) + "\\config.ini");
 		BoaBoaFix = config->getBool("General", "BoaBoaFix", true);
 		if (BoaBoaFix) WriteCall((void*)0x79FCE4, BoaFix); //Recreate a "bug" from the DC version to make it play multiple times
@@ -173,8 +229,31 @@ extern "C"
 		WriteData<1>((char*)0x66DC76, 111); //Gamma steals Froggy
 		WriteData<1>((char*)0x6A40C8, 108); //Amy talking to Gamma (Amy's story)
 		WriteData<1>((char*)0x677F8B, 108); //Amy talking to Gamma (Gamma's story)
+		//Chaos 0 cutscene fix
+		WriteCall((void*)0x6CC6E1, QueueBullet);
+		WriteCall((void*)0x6CC782, QueueBullet);
+		WriteCall((void*)0x6CC802, QueueBullet);
+		WriteCall((void*)0x6CC885, QueueBullet);
+		WriteCall((void*)0x6CC8A9, QueueBullet);
+		WriteCall((void*)0x6CC8D0, QueueBullet);
+		WriteCall((void*)0x6CC8F4, QueueBullet);
+		WriteCall((void*)0x6CC91B, QueueBullet);
+		WriteCall((void*)0x6CC93F, QueueBullet);
+		WriteCall((void*)0x6CC966, QueueBullet);
+		WriteCall((void*)0x6CC98A, QueueBullet);
+		WriteCall((void*)0x6CC9B1, QueueBullet);
+		WriteCall((void*)0x6CC9D5, QueueBullet);
+		WriteCall((void*)0x6CC9FC, QueueBullet);
+		WriteCall((void*)0x6CCA20, QueueBullet);
+		WriteCall((void*)0x6CCA47, QueueBullet);
 	}
 
+	/*__declspec(dllexport) void __cdecl OnInput()
+	{
+		if (ControllerPointers[0]->PressedButtons & Buttons_Z) CustomSound(0, 0, 0, 127, Camera_Data1->Position.x, Camera_Data1->Position.y, Camera_Data1->Position.z);
+		if (ControllerPointers[0]->PressedButtons & Buttons_A) CustomSound(0, 0, -1, -100, Camera_Data1->Position.x, Camera_Data1->Position.y, Camera_Data1->Position.z);
+		//if (ControllerPointers[0]->PressedButtons & Buttons_A) BoaFix(0, 0, 0, 0, Camera_Data1->Position.x, Camera_Data1->Position.y, Camera_Data1->Position.z);
+	}*/
 	__declspec(dllexport) void __cdecl OnFrame()
 	{
 		auto entity = EntityData1Ptrs[0];
