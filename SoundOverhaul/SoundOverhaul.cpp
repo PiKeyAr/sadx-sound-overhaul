@@ -51,6 +51,7 @@ DataArray(SoundEntry, SoundQueue, 0x3B292F8, 100);
 static bool SnowSoundFixed = false;
 
 bool BoaBoaFix = true;
+bool ClassicRingPan = true;
 
 SoundFileInfo E101mkIISoundList_list[] = {
 	{ 0, "COMMON_BANK00" },
@@ -206,7 +207,9 @@ extern "C"
 		//Load config stuff
 		const IniFile *config = new IniFile(std::string(path) + "\\config.ini");
 		BoaBoaFix = config->getBool("General", "BoaBoaFix", true);
+		ClassicRingPan = config->getBool("General", "ClassicRingPan", true);
 		if (BoaBoaFix) WriteCall((void*)0x79FCE4, BoaFix); //Recreate a "bug" from the DC version to make it play multiple times
+		if (ClassicRingPan) WriteData((int*)0x910290, 255); //Classic 100% stereo panning for ring collect sound
 		WriteData<1>((char*)0x42508D, 0x11u); //Fix for sounds playing multiple times over
 		WriteCall((void*)0x57B00C, EggWalkerMissileFix); //Missing entity fix
 		//Missing sound fixes
