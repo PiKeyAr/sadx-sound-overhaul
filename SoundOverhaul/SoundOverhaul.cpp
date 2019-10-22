@@ -3,20 +3,22 @@
 #include "Trampoline.h"
 
 //00423CD0 write 44AC0000 instead of 22560000 when moving to 44100hz sounds
+//00410561 too
 
 enum SoundFlags
 {
-	SoundFlags_Repeat = 0x1,
+	SoundFlags_Repeat = 0x1, //Don't cancel playing even if the same sound ID is found in the queue
 	SoundFlags_Positional_AB = 0x100, //Use Volume A and B
 	SoundFlags_Positional_A = 0x200, //Use Volume A only
-	SoundFlags_Pan = 0x800,
-	SoundFlags_Pitch = 0x2000,
-	SoundFlags_No3D = 0x20,
-	SoundFlags_3D = 0x4000,
+	SoundFlags_Pan = 0x800, //Enable pan control
+	SoundFlags_Pitch = 0x2000, //Enable pitch control
+	SoundFlags_No3D = 0x20, //Set for 3D sounds when 3D sound is disabled in config
+	SoundFlags_3D = 0x4000, //Set for 3D sounds
 	SoundFlags_3D_A = 0x10,
 	SoundFlags_3D_B = 0x1000,
 	SoundFlags_Unknown_A = 0x2,
 	SoundFlags_Unknown_B = 0x40,
+	SoundFlags_Fadeout = 0x4, //I added this for custom use, SADX doesn't have it
 };
 
 struct SoundEntry
@@ -24,7 +26,7 @@ struct SoundEntry
 	int MaxIndex; //Maximum index? Can be 0xFFFFFFFF
 	int PlayLength; //0xFFFFFFFF to loop indefinitely
 	void *SourceEntity; //Sound stops when entity is destroyed
-	SoundFlags Flags; //3D sound related, ANDs with 1, 10, 100, 200, 800, 2000, 4000, 0x11 in PlaySound2, 0x801 in PlaySound, | 0x10 in DualEntity, 
+	int Flags; //ANDs with 1, 10, 100, 200, 800, 2000, 4000, 0x11 in PlaySound2, 0x801 in PlaySound, | 0x10 in DualEntity, 
 	int SoundID;
 	int Panning;
 	int VolumeA;
@@ -52,6 +54,7 @@ static bool SnowSoundFixed = false;
 
 bool BoaBoaFix = true;
 bool ClassicRingPan = true;
+bool FixSoundVolume = false;
 
 SoundFileInfo E101mkIISoundList_list[] = {
 	{ 0, "COMMON_BANK00" },
@@ -72,9 +75,77 @@ SoundFileInfo FinalEggSoundList_list[] = {
 SoundList FinalEggSoundList = { arraylengthandptr(FinalEggSoundList_list) };
 SoundList E101mkIISoundList = { arraylengthandptr(E101mkIISoundList_list) };
 
+//Solution by JohnBolton, taken from https://www.gamedev.net/forums/topic/337397-sound-volume-question-directsound/?tab=comments#comment-3197281
+
+int ConvertLinearToDirectX(int value, int max)
+{
+	if (value == 0)
+	{
+		return -10000;
+	}
+	else
+	{
+		return (int)floorf(2000.0f * log10f((float)(value) / (float)max) + 0.5f);
+	}
+}
+
+static void __cdecl SetSoundVolume_r(int queue_id, int volume);
+static Trampoline SetSoundVolume_t(0x4101A0, 0x4101A5, SetSoundVolume_r);
+static void __cdecl SetSoundVolume_r(int queue_id, int volume)
+{
+	auto original = reinterpret_cast<decltype(SetSoundVolume_r)*>(SetSoundVolume_t.Target());
+	if (FixSoundVolume)
+	{
+		//Get 3D flags
+		int v2 = SoundQueue[queue_id].Flags;
+		//Calculate original volume value from DSound crap
+		int conv_volume = ((volume / 2) + 640) / 5;
+		//If the volume is -10000 or the sound is 3D, run the original function
+		if (volume == -10000 || v2 & 0x4000)
+		{
+			original(queue_id, volume);
+			return;
+		}
+		//Else convert the volume using the formula and pass it
+		else
+		{
+			//PrintDebug("DSound original: %d, Ingame: %d, DSound converted: %d\n", volume, conv_volume, ConvertLinearToDirectX(conv_volume + 128, 255));
+			original(queue_id, ConvertLinearToDirectX(conv_volume + 100, 227)); //-100 to 127
+			return;
+		}
+	}
+	else original(queue_id, volume);
+}
+
+int PlaySound_FadeOut(int ID, EntityData1* entity, int index, int volume)
+{
+	Sint32 v4; // eax
+	Sint32 v6; // eax
+	int v7; // ecx
+	v4 = SoundQueue_GetFreeIndex(index);
+	if (v4 < 0)
+	{
+		return -1;
+	}
+	SoundQueue[v4].PlayLength = 120;
+	SoundQueue[v4].MaxIndex = -1;
+	SoundQueue[v4].Flags = 0x205;
+	SoundQueue[v4].SoundID = ID;
+	SoundQueue[v4].Panning = 0;
+	SoundQueue[v4].VolumeA = volume;
+	SoundQueue[v4].VolumeB = volume;
+	SoundQueue[v4].PitchShift = 0;
+	return 1;
+}
+
 void PlaySpindash(int id, EntityData1 *Data1, int a3, EntityData1 *a4, int a5)
 {
-	QueueSound_DualEntity(767, Data1, 1, 0, 160);
+	if (CharObj2Ptrs[0])
+	{
+		if (CharObj2Ptrs[0]->Upgrades & Upgrades_LightShoes) PlaySound_FadeOut(767, Data1, 1, 0);
+		else QueueSound_DualEntity(767, Data1, 1, 0, 160);
+	}
+	else QueueSound_DualEntity(767, Data1, 1, 0, 160);
 }
 
 void TailsWhatAmIGonnaDoWithYou()
@@ -141,8 +212,8 @@ int BoaFix(int ID, EntityData1 *entity, int index, int volume, float x, float y,
 	SoundQueue[v4].Flags = (SoundFlags)0x111;
 	SoundQueue[v4].SoundID = ID;
 	SoundQueue[v4].Panning = 0;
-	SoundQueue[v4].VolumeA = -50;
-	SoundQueue[v4].VolumeB = -80;
+	SoundQueue[v4].VolumeA = -20;
+	SoundQueue[v4].VolumeB = -50;
 	SoundQueue[v4].PitchShift = 0;
 	SoundQueue[v4].origin.x = x;
 	SoundQueue[v4].origin.y = y;
@@ -150,7 +221,7 @@ int BoaFix(int ID, EntityData1 *entity, int index, int volume, float x, float y,
 	return 1;
 }
 
-int CustomSound(int ID, EntityData1 *entity, int index, int volume, float x, float y, float z)
+int CustomSound(int ID, EntityData1 *entity, int index, int volume, int length, int flags, float x, float y, float z)
 {
 	Sint32 v4; // eax
 	Sint32 v6; // eax
@@ -161,9 +232,9 @@ int CustomSound(int ID, EntityData1 *entity, int index, int volume, float x, flo
 		return -1;
 	}
 	SoundQueue[v4].SourceEntity = entity;
-	SoundQueue[v4].PlayLength = 40;
+	SoundQueue[v4].PlayLength = length;
 	SoundQueue[v4].MaxIndex = -1;
-	SoundQueue[v4].Flags = (SoundFlags)0x201;
+	SoundQueue[v4].Flags = flags;
 	SoundQueue[v4].SoundID = ID;
 	SoundQueue[v4].Panning = 0;
 	SoundQueue[v4].VolumeA = volume;
@@ -172,6 +243,7 @@ int CustomSound(int ID, EntityData1 *entity, int index, int volume, float x, flo
 	SoundQueue[v4].origin.x = x;
 	SoundQueue[v4].origin.y = y;
 	SoundQueue[v4].origin.z = z;
+	SoundQueueOriginEntities[v4] = entity;
 	return 1;
 }
 
@@ -208,6 +280,7 @@ extern "C"
 		const IniFile *config = new IniFile(std::string(path) + "\\config.ini");
 		BoaBoaFix = config->getBool("General", "BoaBoaFix", true);
 		ClassicRingPan = config->getBool("General", "ClassicRingPan", true);
+		FixSoundVolume = config->getBool("General", "FixSoundVolume", false);
 		if (BoaBoaFix) WriteCall((void*)0x79FCE4, BoaFix); //Recreate a "bug" from the DC version to make it play multiple times
 		if (ClassicRingPan) WriteData((int*)0x910290, 255); //Classic 100% stereo panning for ring collect sound
 		WriteData<1>((char*)0x42508D, 0x11u); //Fix for sounds playing multiple times over
@@ -251,13 +324,7 @@ extern "C"
 		WriteCall((void*)0x6CCA47, QueueBullet);
 	}
 
-	/*__declspec(dllexport) void __cdecl OnInput()
-	{
-		if (ControllerPointers[0]->PressedButtons & Buttons_Z) CustomSound(0, 0, 0, 127, Camera_Data1->Position.x, Camera_Data1->Position.y, Camera_Data1->Position.z);
-		if (ControllerPointers[0]->PressedButtons & Buttons_A) CustomSound(0, 0, -1, -100, Camera_Data1->Position.x, Camera_Data1->Position.y, Camera_Data1->Position.z);
-		//if (ControllerPointers[0]->PressedButtons & Buttons_A) BoaFix(0, 0, 0, 0, Camera_Data1->Position.x, Camera_Data1->Position.y, Camera_Data1->Position.z);
-	}*/
-	__declspec(dllexport) void __cdecl OnFrame()
+		__declspec(dllexport) void __cdecl OnFrame()
 	{
 		auto entity = EntityData1Ptrs[0];
 		//Sound queue framerate fix
@@ -283,7 +350,45 @@ extern "C"
 				}
 			}
 		}
+		//Sound queue fadeout
+		for (int i = 0; i < 36; i++)
+		{
+			if (SoundQueue[i].Flags & 0x4 && SoundQueue[i].PlayLength <= 110)
+			{
+				if (SoundQueue[i].VolumeA > -100)
+				{
+					SoundQueue[i].VolumeA -= 2;
+					SoundQueue[i].VolumeB -= 2;
+				}
+				if (SoundQueue[i].VolumeA < -100)
+				{
+					SoundQueue[i].VolumeA = -100;
+					SoundQueue[i].VolumeB = -100;
+					SoundQueue[i].PlayLength = 0;
+				}
+			}
+		}
 	}
 
+	//Test stuff
+	//Volume fixes
+	//MusicVolume = -10000 + 40*((MusicVolumeThing, 100) * 300)/100;
+	//PrintDebug("MusicVolume: %d\n", MusicVolume);
+	/*
+	__declspec(dllexport) void __cdecl OnInput()
+	{
+		//if (ControllerPointers[0]->PressedButtons & Buttons_A) CustomSound(0, EntityData1Ptrs[0], 0, 0, 0x205, Camera_Data1->Position.x, Camera_Data1->Position.y, Camera_Data1->Position.z);
+		//if (ControllerPointers[0]->PressedButtons & Buttons_B) CustomSound(766, EntityData1Ptrs[0], 0, -127, 0x201, Camera_Data1->Position.x, Camera_Data1->Position.y, Camera_Data1->Position.z);
+		/*if (ControllerPointers[0]->PressedButtons & Buttons_A)
+		{
+			KillSounds();
+			FakeEntity.Position.x = EntityData1Ptrs[0]->Position.x;
+			FakeEntity.Position.y = EntityData1Ptrs[0]->Position.y;
+			FakeEntity.Position.z = EntityData1Ptrs[0]->Position.z;
+			CustomSound(767, (EntityData1*)0xFFFFFFFF, 0, 0, 0x5136, FakeEntity.Position.x, FakeEntity.Position.y, FakeEntity.Position.z);
+		}
+		//if (ControllerPointers[0]->PressedButtons & Buttons_A) BoaFix(0, 0, 0, 0, Camera_Data1->Position.x, Camera_Data1->Position.y, Camera_Data1->Position.z);
+	}
+	*/
 	__declspec(dllexport) ModInfo SADXModInfo = { ModLoaderVer };
 }
