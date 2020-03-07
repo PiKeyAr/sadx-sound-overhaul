@@ -29,12 +29,11 @@ DataArray(SoundFileInfo, SoundList_HotShelter, 0x90F8F0, 5);
 //Config stuff
 bool BoaBoaFix = true;
 bool ClassicRingPan = true;
-bool FixSoundVolume = false;
+bool FixSoundVolume = true;
 bool SpindashFade = true;
 bool DelayedSoundsEnabled = true;
 bool AdvancedVolumeControl = true;
-int MusicVolumeSO = 100;
-int VoiceVolumeSO = 100;
+int MovieVolumeSO = 100;
 int MovieVolume_Real = 0;
 int MusicVolumeBoost = 5100;
 int VoiceVolumeBoost = 0;
@@ -259,6 +258,21 @@ void DelaySound_Febjg(int sound_id, EntityData1* a2, int min_index, int volume, 
 	PlaySound_3D_Timer_Priority(sound_id, a2, min_index, volume, PlayTime, a6);
 }
 
+
+static void __cdecl ORraf_DrawDustEffect_r(ObjectMaster* a1);
+static Trampoline ORraf_DrawDustEffect_t(0x5EBF20, 0x5EBF25, ORraf_DrawDustEffect_r);
+static void __cdecl ORraf_DrawDustEffect_r(ObjectMaster* a1)
+{
+	auto original = reinterpret_cast<decltype(ORraf_DrawDustEffect_r)*>(ORraf_DrawDustEffect_t.Target());
+	if (a1->Data1->Scale.y >= 1.0f && a1->Data1->Scale.y < 1.05f)
+	{
+		//PrintDebug("X: %f, Y:%f, Z:%f\n", a1->Data1->Position.x, a1->Data1->Position.y, a1->Data1->Position.z);
+		if (DelayedSoundsEnabled) DelaySound_Febjg(SE_LW_POLE, a1->Data1, -1, 0, 120, a1->Data1);
+		else PlaySound_3D_Timer(SE_LW_POLE, a1->Data1, -1, 0, 120, a1->Data1);
+	}
+	original(a1);
+}
+
 /*
 void DelaySound_Ring(int ID, EntityData1* a2, int a3, int a4)
 {
@@ -310,19 +324,19 @@ extern "C"
 		const IniFile *config = new IniFile(std::string(path) + "\\config.ini");
 		BoaBoaFix = config->getBool("General", "BoaBoaFix", true);
 		ClassicRingPan = config->getBool("General", "ClassicRingPan", true);
-		FixSoundVolume = config->getBool("General", "FixSoundVolume", false);
+		FixSoundVolume = config->getBool("General", "FixSoundVolume", true);
 		SpindashFade = config->getBool("General", "SpindashFade", true);
 		DelayedSoundsEnabled = config->getBool("General", "DelayedSounds", true);
 		AdvancedVolumeControl = config->getBool("Volume", "AdvancedVolumeControl", true);
 		if (AdvancedVolumeControl)
 		{
-			MusicVolumeSO = config->getInt("Volume", "MusicVolumeSO", 100);
-			VoiceVolumeSO = config->getInt("Volume", "VoiceVolumeSO", 100);
 			MusicVolumeBoost = config->getInt("Volume", "MusicVolumeBoost", 5100);
 			VoiceVolumeBoost = config->getInt("Volume", "VoiceVolumeBoost", 0);
-			MusicVolumeConv = CalculateVolume_SADXStyle(MusicVolumeSO, 0) + MusicVolumeBoost;
-			VoiceVolumeConv = CalculateVolume_SADXStyle(VoiceVolumeSO, 1) + VoiceVolumeBoost;
-			WriteData((int**)0x005140DF, &MovieVolume_Real); //0 for maximum with WMP
+			MovieVolumeSO = config->getInt("Volume", "MovieVolumeSO", 100);
+			MusicVolumeConv = CalculateVolume_SADXStyle(GetPrivateProfileIntA("sonicDX", "bgmv", 89, ".\\sonicDX.ini"), 0) + MusicVolumeBoost;
+			VoiceVolumeConv = CalculateVolume_SADXStyle(GetPrivateProfileIntA("sonicDX", "voicev", 100, ".\\sonicDX.ini"), 1) + VoiceVolumeBoost;
+			MovieVolume_Real = ConvertLinearToDirectX(MovieVolumeSO, 100);
+			WriteData((int**)0x005140DF, &MovieVolume_Real);
 		}
 		//Delayed sound effects
 		if (DelayedSoundsEnabled)
@@ -353,6 +367,8 @@ extern "C"
 		WriteData<1>((char*)0x6CE07B, 0i8); //There's no landing gear in this mode!
 		WriteData<1>((char*)0x6CA530, 0x34); //Goin' down! Aaaah! Look out below!
 		WriteData<1>((char*)0x6E8E56, 0i8); //Tails, what am I gonna do with you?;
+		WriteData<1>((char*)0x005EAE93, 0x50); //HebiGate sound fix
+		WriteData<5>((char*)0x5EC440, 0x90u); //SE_LW_POLE
 		WriteCall((void*)0x4FADCF, DolphinSoundFix);
 		//Fixes for missing/wrong soundbanks
 		SoundList_HotShelter[3].Filename = "FINAL_EGG_BANK04";
@@ -361,6 +377,7 @@ extern "C"
 		WriteData<1>((char*)0x6A40C8, 108); //Amy talking to Gamma (Amy's story)
 		WriteData<1>((char*)0x677F8B, 108); //Amy talking to Gamma (Gamma's story)
 		//Chaos 0 cutscene fix
+		WriteData<1>((char*)0x006CCC1B, 0x78u); //uuuuuuoooooohhh!
 		WriteCall((void*)0x6CC6E1, QueueBullet);
 		WriteCall((void*)0x6CC782, QueueBullet);
 		WriteCall((void*)0x6CC802, QueueBullet);
@@ -450,6 +467,7 @@ extern "C"
 			VolumeFixesApplied = true;
 		}
 		//PrintDebug("MusicVolume: %d \n", MusicVolume);
+		//PrintDebug("MovieVolume: %d \n", MovieVolume_Real);
 	}
 
 /*	__declspec(dllexport) void __cdecl OnInput()
