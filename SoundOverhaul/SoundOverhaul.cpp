@@ -173,7 +173,7 @@ int BoaFix(int ID, EntityData1 *entity, int index, int volume, float x, float y,
 		return -1;
 	}
 	SoundQueue[v4].SourceEntity = entity;
-	SoundQueue[v4].PlayTime = 120;
+	SoundQueue[v4].PlayTime = 40;
 	SoundQueue[v4].Priority = -1;
 	SoundQueue[v4].Flags = (SoundFlags)0x111;
 	SoundQueue[v4].SoundID = ID;
