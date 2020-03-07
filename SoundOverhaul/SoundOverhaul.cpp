@@ -238,7 +238,7 @@ int QueueBullet(int sound_id, EntityData1 *entity, int min_index, int volume, fl
 	return 1;
 }
 
-void DelaySound_Febjg(int sound_id, EntityData1* a2, int min_index, int volume, int PlayTime, EntityData1* a6)
+void PlaySound_Delayed(int sound_id, EntityData1* a2, int min_index, int volume, int PlayTime, EntityData1* a6)
 {
 	for (int i = 0; i < LengthOfArray(DelayedSounds); i++)
 	{
@@ -267,7 +267,7 @@ static void __cdecl ORraf_DrawDustEffect_r(ObjectMaster* a1)
 	if (a1->Data1->Scale.y >= 1.0f && a1->Data1->Scale.y < 1.05f)
 	{
 		//PrintDebug("X: %f, Y:%f, Z:%f\n", a1->Data1->Position.x, a1->Data1->Position.y, a1->Data1->Position.z);
-		if (DelayedSoundsEnabled) DelaySound_Febjg(SE_LW_POLE, a1->Data1, -1, 0, 120, a1->Data1);
+		if (DelayedSoundsEnabled) PlaySound_Delayed(SE_LW_POLE, a1->Data1, -1, 0, 120, a1->Data1);
 		else PlaySound_3D_Timer(SE_LW_POLE, a1->Data1, -1, 0, 120, a1->Data1);
 	}
 	original(a1);
@@ -341,7 +341,7 @@ extern "C"
 		//Delayed sound effects
 		if (DelayedSoundsEnabled)
 		{
-			WriteCall((void*)0x7A3B22, DelaySound_Febjg);
+			WriteCall((void*)0x7A3B22, PlaySound_Delayed);
 			/*WriteCall((void*)0x44FE95, DelaySound_Ring);
 			WriteCall((void*)0x4501F7, DelaySound_Ring);
 			WriteCall((void*)0x4504DA, DelaySound_Ring);
