@@ -2,68 +2,33 @@
 
 enum SoundFlags
 {
-	SoundFlags_Repeat = 0x1, //Don't cancel playing even if the same sound ID is found in the queue
-	SoundFlags_Positional = 0x100, //Enable camera-based distance for volume control
-	SoundFlags_Volume = 0x200, //Enable volume control
+	SoundFlags_NoCheckRepeat = 0x1, //Add sound to the queue even if the same sound ID is playing
+	SoundFlags_VolumeDist = 0x100, //Enable distance-based volume control (XYZ)
+	SoundFlags_VolumeManual = 0x200, //Enable manual volume control
 	SoundFlags_Pan = 0x800, //Enable pan control
 	SoundFlags_Pitch = 0x2000, //Enable pitch control
 	SoundFlags_No3D = 0x20, //Set for 3D sounds when 3D sound is disabled in config
-	SoundFlags_3D = 0x4000, //3D sounds
-    SoundFlags_Pseudo3D = 0x1000, //Some kind of pseudo-3D sound with camera-based distance calculation, can be combined with 4000
-	SoundFlags_Stop = 0x10, //Supposed to stop playback but I think it doesn't work right
-	SoundFlags_Unknown_A = 0x2,
-	SoundFlags_PlayerDistance = 0x40, //Adjust sound volume based on distance from player... or something
+	SoundFlags_3D = 0x4000, //Dolby/HRTF stereo panning
+    SoundFlags_QSound = 0x1000, //Dreamcast leftover, doesn't seem to do anything in SADX
+	SoundFlags_AutoStop = 0x10, //Stop the sound when the timer runs out
+	SoundFlags_Unknown_A = 0x2, //Used internally for something
 	SoundFlags_Fadeout = 0x4, //I added this for custom use, SADX doesn't have it
 };
 
 struct SoundEntry
 {
-	int Priority; //-1 for top priority
-	int PlayTime; //-1 to loop indefinitely
-	void* SourceEntity; //Sound stops when entity is destroyed
-	int Flags; //ANDs with 1, 10, 100, 200, 800, 2000, 4000
-	int SoundID;
-	int Panning;
-	int CurrentVolume;
-	int MaxVolume;
-	int PitchShift;
-	NJS_VECTOR pos;
-	int qnum; //Only used when a free index can't be found (set to -1)
-	int banknum; //Unused?
-};
-
-struct MiniSoundQueue
-{
-	int sound_id;
-	EntityData1* entity1;
-	int min_index;
+	int pri; //-1 for top priority
+	int timer; //-1 to loop indefinitely, stops at 0
+	void* entity; //Sound stops when entity is destroyed, can be NULL
+	int flags; //SoundFlags
+	int id; //SoundIDs
+	int pan;
 	int volume;
-	int PlayTime;
-	int maxvolume;
-	bool is3d;
-};
-
-MiniSoundQueue DelayedSounds[] = {
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
-	{ -1, NULL, 0, 0, 0, NULL, false },
+	int volume_max; //Also stores an entity pointer for 3D sounds
+	int pitch;
+	NJS_VECTOR pos;
+	int qnum; //Set to -1 when an entity isn't already in the 3D sound queue
+	int banknum; //Unused
 };
 
 enum SoundIDs
