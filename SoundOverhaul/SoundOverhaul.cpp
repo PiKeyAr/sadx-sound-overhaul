@@ -13,11 +13,13 @@ SEDistanceOverride DistanceOverrideTable[] = {
 	{ SE_SHT_FLY_ENEMY, 1000.0f, 2000.0f, 0 },
 	{ SE_SD_CANB_FIRE, 50.0f, 500.0f, 0 },
 	{ SE_M2_B_SHOT, 20.0f, 500.0f, 0 },
+	{ SE_M2_JUMP, 20.0f, 500.0f, 0 },
 	{ SE_M1_JET, 20.0f, 500.0f, 0 },
 	{ SE_M2_B_BOMB, 20.0f, 500.0f, 0 },
 	{ SE_CS_SWIM, 20.0f, 500.0f, 0 },
 	{ SE_CS_INWATER, 50.0f, 500.0f, 0 },
 	{ SE_SD_CANH_FIRE, 100.0f, 1000.0f, 96 },
+	{ SE_SD_CANH_FIRE, 100.0f, 1000.0f, 75 },
 	{ SE_SD_CANH_ROT, 100.0f, 1000.0f, 0 },
 	{ SE_M3_ENERGYSHOT, 50.0f, 500.0f, 0 },
 	{ SE_M3_NEEDLEROT, 50.0f, 500.0f, 0 },
@@ -515,6 +517,7 @@ extern "C"
 		WriteData<1>((char*)0x6AF86B, 0i8); //I forgot to put in the landing gear!
 		WriteData<1>((char*)0x6CE07B, 0i8); //There's no landing gear in this mode!
 		WriteData<1>((char*)0x6CA530, 0x34); //Goin' down! Aaaah! Look out below!
+		WriteData<1>((char*)0x6CA54F, 0x78u); //Look out below timer
 		WriteCall((void*)0x6E96B9, TailsWhatAmIGonnaDoWithYou); //Tails, what am I gonna do with you?
 		WriteData<1>((char*)0x66DC76, 111); //Gamma steals Froggy soundlist
 		WriteData<1>((char*)0x6A40C8, 108); //Amy talking to Gamma (Amy's story) soundlist
@@ -547,8 +550,9 @@ extern "C"
 		WriteCall((void*)0x6E17FD, UhhhhaaaAughh2); //Sonic bumps into Knuckles
 		WriteCall((void*)0x6E10CD, UhhhhaaaAughh); //Sonic bumps into Knuckles
 		//SkyboxObjects[0] = Load3DSoundTest; //3D sound test in Hedgehog Hammer
+
 	}
-	
+
 	__declspec(dllexport) void __cdecl OnFrame()
 	{
 		auto entity = EntityData1Ptrs[0];
