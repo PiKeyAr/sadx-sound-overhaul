@@ -19,7 +19,7 @@ struct SoundEntry
 {
 	int pri; //-1 for top priority
 	int timer; //-1 to loop indefinitely, stops at 0
-	void* entity; //Sound stops when entity is destroyed, can be NULL
+	EntityData1* entity; //Sound stops when entity is destroyed, can be NULL
 	int flags; //SoundFlags
 	int id; //SoundIDs
 	int pan;
