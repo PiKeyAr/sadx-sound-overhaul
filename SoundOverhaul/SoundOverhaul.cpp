@@ -4,9 +4,9 @@ SEFadeoutData FadeoutTable[] = {
 	{ SE_SPINCHARGE, 110, 3 },
 	{ SE_WV_WIND, 30, 4 },
 	{ SE_FE_FAN, 30, 4 },
-	{ SE_PC_SS_ONWATER, 80, 3},
-	{ SE_PC_SS_ONWATER2, 80, 3},
-	{ SE_PCB_SONICUP, 80, 4 },
+	//{ SE_PC_SS_ONWATER, 30, 3},
+	//{ SE_PC_SS_ONWATER2, 30, 3},
+	//{ SE_PCB_SONICUP, 80, 4 },
 };
 
 SEDistanceOverride DistanceOverrideTable[] = {
@@ -260,7 +260,6 @@ void __cdecl lsndVolume(int volume, int queue_id)
 		{
 			Set3DSoundVolume_2(flags, queue_id, 0.0f, 5000.0f, 0.0f);
 			Critical_SetSoundVolume(queue_id, -10000);
-			//PrintDebug("lsndVolume: id %d, muted\n", queue_id);
 			return;
 		}
 		if (flags & SoundFlags_Fadeout)
@@ -268,6 +267,7 @@ void __cdecl lsndVolume(int volume, int queue_id)
 			SoundQueue[queue_id].flags &= ~SoundFlags_Fadeout;
 			SoundQueue[queue_id].timer = 1;
 		}
+		//PrintDebug("lsndVolume: id %d, muted\n", queue_id);
 	}
 	//PrintDebug("lsndVolume: id %d, volume %d, dsound: %d\n", queue_id, volume, volume_conv);
 	Critical_SetSoundVolume(queue_id, volume_conv);
@@ -325,12 +325,30 @@ bool Set3DMinMaxPCM_Hook(int id, float dist_min, float dist_max)
 	return Set3DMinMaxPCM(id, dist_min, dist_max);
 }
 
+void SoundFade_Apply(int queue_id)
+{
+	for (int i = 0; i < LengthOfArray(FadeoutTable); i++)
+	{
+		if (FadeoutTable[i].ID == SoundQueue[queue_id].id)
+		{
+			if (FadeoutTable[i].start >= SoundQueue[queue_id].timer)
+			{
+				SoundQueue[queue_id].volume -= FadeoutTable[i].speed;
+			}
+			if (SoundQueue[queue_id].volume <= -127) StopSound(queue_id);
+			return;
+		}
+	}
+	SoundQueue[queue_id].volume -= 4;
+	if (SoundQueue[queue_id].volume <= -127) StopSound(queue_id);
+	//PrintDebug("Def");
+}
+
 void SoundFade()
 {
 	bool sounddone = false;
 	for (int q = 0; q < 36; q++)
 	{
-		//if (SoundQueue[q].id == SE_SPINCHARGE && SoundQueue[q].timer == 1) PlaySound(0, 0, 0, 0);
 		if (!EV_MainThread_ptr && SoundQueue[q].volume)
 		{
 			if (!(SoundQueue[q].flags & SoundFlags_VolumeManual) && !(SoundQueue[q].flags & SoundFlags_VolumeDist))
@@ -340,25 +358,7 @@ void SoundFade()
 		}
 		if (SoundQueue[q].flags & SoundFlags_Fadeout)
 		{
-			sounddone = false;
-			for (int i = 0; i < LengthOfArray(FadeoutTable); i++)
-			{
-				if (FadeoutTable[i].ID == SoundQueue[q].id)
-				{
-					sounddone = true;
-					if (FadeoutTable[i].start >= SoundQueue[q].timer)
-					{
-						SoundQueue[q].volume -= FadeoutTable[i].speed;
-					}
-					if (SoundQueue[q].volume <= -127) StopSound(q);
-				}
-				if (!sounddone)
-				{
-					SoundQueue[q].volume -= 4;
-					if (SoundQueue[q].volume <= -127) StopSound(q);
-					sounddone = true;
-				}
-			}
+			SoundFade_Apply(q);
 		}
 	}
 }
@@ -400,10 +400,22 @@ void SwingingSpikeBallFix(SoundIDs a1, EntityData1* entity, int pri, int volume,
 	if (v6 == -1) PlaySound_Delayed(a1, entity, pri, volume, 130, entity_origin);
 }
 
+signed int PerfectChaosFix(SoundIDs sound_id, EntityData1* entity, int pri, int volume)
+{
+	return PlaySound_Timer(sound_id, entity, pri, volume, 600);
+}
+
 extern "C"
 {
 	__declspec(dllexport) void __cdecl Init(const char* path, const HelperFunctions &helperFunctions)
 	{
+		if (GetModuleHandle(L"SoundOverhaul") != nullptr)
+		{
+			MessageBox(WindowHandle,
+				L"Please enable only one version of Sound Overhaul at a time. The mod will not work.",
+				L"Sound Overhaul error: Incompatible mods detected", MB_OK | MB_ICONERROR);
+			return;
+		}
 		//Config stuff
 		const IniFile* config = new IniFile(std::string(path) + "\\config.ini");
 		BoaBoaFix = config->getBool("General", "BoaBoaFix", true);
@@ -436,6 +448,7 @@ extern "C"
 			WriteCall((void*)0x7A3B22, PlaySound_Delayed); //OFeBjg
 			WriteCall((void*)0x47AE23, PlaySound_StandardTimer_Delay); //Knuckles' Maximum Heat release
 			WriteCall((void*)0x4CAF88, PlaySound_StandardTimer_Delay); //Explosion in Sky Deck
+			WriteCall((void*)0x5B57D8, PlaySound_Delayed); //Final Egg targets
 			WriteCall((void*)0x7A3616, SwingingSpikeBallFix); //Swinging spike balls
 			WriteCall((void*)0x62E821, PlaySound_StandardTimer_Delay); //Sky Chase final boss missiles
 		}
@@ -455,6 +468,12 @@ extern "C"
 			WriteCall((void*)0x4788A5, StopSound_Fade); //Knuckles' glide sound
 			WriteCall((void*)0x46952F, StopSound_Fade); //Lost World mirror room
 			WriteCall((void*)0x5E2ACD, StopSound_Fade); //Lost World mirror room 2
+			WriteCall((void*)0x561DEA, StopSound_Fade); //Perfect Chaos emerging
+			WriteCall((void*)0x561F14, StopSound_Fade); //Perfect Chaos sinking
+			WriteCall((void*)0x561E28, PerfectChaosFix); //Emerging
+			WriteCall((void*)0x561F7D, PerfectChaosFix); //Sinking
+			//WriteCall((void*)0x55EF45, StopSound_Fade); //Fade out Super Sonic's on water sound 1
+			//WriteCall((void*)0x55EF8E, StopSound_Fade); //Fade out Super Sonic's on water sound 1
 		}
 		//Various looping/timing/cutoff fixes
 		WriteCall((void*)0x4E26D9, PlaySound_StandardTimer_Delay); //Gamma destroying bridge in Windy Valley
@@ -468,6 +487,7 @@ extern "C"
 		WriteCall((void*)0x47FCCA, PlaySound_Loop); //E102 jet sound loop (land)
 		WriteData<1>((char*)0x47F665, 0x01u); //Jet sound priority
 		WriteData<1>((char*)0x47F72A, 0x01u); //Jet sound priority
+		WriteData<1>((char*)0x47FCC2, 0x01u); //Jet sound priority (land)
 		WriteCall((void*)0x478AEB, KnuxGlide); //Knuckles' glide proper loop
 		WriteData<1>((char*)0x4DF112, 0x79u); //Windy Valley wind path
 		WriteData<1>((char*)0x61B790, 0x60u); //Speed Highway fountain jump
@@ -495,8 +515,6 @@ extern "C"
 		WriteCall((void*)0x5F0236, CannonFix); //Sky Deck Act 2 cannon background noise
 		WriteCall((void*)0x620FA0, PirateShipFix); //Pirate ships in Twinkle Park
 		WriteCall((void*)0x599A7B, WormFix); //Sand Hill worm
-		//WriteCall((void*)0x55EF45, StopSound_Fade); //Fade out Super Sonic's on water sound 1
-		//WriteCall((void*)0x55EF8E, StopSound_Fade); //Fade out Super Sonic's on water sound 1
 		//Missing sound fixes
 		WriteCall((void*)0x4507FA, PlayCharacterHurtVoice); //Play hurt voices
 		WriteData<2>((void*)0x53881F, 0x90u); //Enable ambient sound in MR Final Egg base
@@ -557,6 +575,10 @@ extern "C"
 	{
 		auto entity = EntityData1Ptrs[0];
 		bool DelayedSoundPlayed = false;
+		if (entity && !EV_MainThread_ptr)
+		{
+			if (CurrentCharacter == Characters_Gamma && EntityData1Ptrs[0]->Action != 31) StopSound(SE_E_RDUSH);
+		}
 		//PrintDebug("Delayed sounds: %d\n", DelayedSoundCount);
 		//Play delayed sounds one per frame
 		if (DelayedSoundsEnabled && DelayedSoundCount)

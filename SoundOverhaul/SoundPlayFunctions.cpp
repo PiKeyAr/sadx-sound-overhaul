@@ -141,6 +141,7 @@ int StopSound_Fade(int num)
 		if (SoundQueue[i].id == num)
 		{
 			SoundQueue[i].flags |= 0x204;
+			SoundQueue[i].timer = 100;
 		}
 	}
 	return 0;
