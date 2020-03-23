@@ -1,5 +1,22 @@
 #include "stdafx.h"
 
+SoundFileInfo ChaoSoundbanks[] = {
+	{0, "COMMON_BANK00" },
+	{1, "CHAO_EFX_BANK01" },
+	{2, "CHECK_SHEET_BANK02" },
+	{4, "CHAOVOICE_BANK04" },
+	{5, "CHAOVOICE_BANK05" },
+	{7, "CHAO_BGM_BANK07" },
+};
+
+SoundFileInfo ChaoSoundbanks2[] = {
+	{0, "COMMON_BANK00" },
+	{2, "CHECK_SHEET_BANK02" },
+	{4, "CHAOVOICE_BANK04" },
+	{5, "CHAOVOICE_BANK05" },
+	{7, "CHAO_BGM_BANK07" },
+};
+
 SEFadeoutData FadeoutTable[] = {
 	{ SE_SPINCHARGE, 110, 3 },
 	{ SE_WV_WIND, 30, 4 },
@@ -521,6 +538,10 @@ extern "C"
 		WriteData<1>((char*)0x5EAE93, 0x50); //HebiGate sound fix
 		WriteData<5>((char*)0x5EC440, 0x90u); //Remove SE_LW_POLE sound
 		//Fixes for missing/wrong soundbanks
+		SoundLists[61].List = ChaoSoundbanks;
+		SoundLists[61].Count = 6;
+		SoundLists[2].List = ChaoSoundbanks2; //Might be unused
+		SoundLists[2].Count = 5;
 		SoundList_HotShelter[3].Filename = "FINAL_EGG_BANK04";
 		WriteCall((void*)0x4B34E4, ZeroNameSoundFix);
 		WriteData((short*)0x00566CC9, (short)SE_ER_ITE); //E101 boss
