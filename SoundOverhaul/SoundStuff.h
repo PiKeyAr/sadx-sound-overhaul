@@ -717,12 +717,12 @@ enum SoundIDs
     SE_CH_ELEVATOR_STOP = 0x2A9,
     SE_CH_ELEVATOR_FUTA = 0x2AA,
     SE_CH_GATE_OPEN = 0x2AB,
-    SE_CH_HOGE5 = 0x2AC,
+    SE_CH_HOGE5 = 0x2AC, //empty, used for ZATTOU 84
     SE_CH_DORE_OPEN = 0x2AD,
     SE_CH_SPRING = 0x2AE,
-    SE_CH_HOGE6 = 0x2AF,
-    SE_CH_BEACH = 0x2B0,
-    SE_CH_HOGE7 = 0x2B1,
+    SE_CH_HOGE6 = 0x2AF, //actually radar tower 87
+    SE_CH_BEACH = 0x2B0, //actually MUSHI 88
+    SE_CH_HOGE7 = 0x2B1, //actually BEACH 89
     SE_CH_START = 0x2B2,
     SE_CH_TAIKO = 0x2B3,
     SE_CH_RAPPA = 0x2B4,

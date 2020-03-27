@@ -6,7 +6,7 @@ SoundFileInfo ChaoSoundbanks[] = {
 	{2, "CHECK_SHEET_BANK02" },
 	{4, "CHAOVOICE_BANK04" },
 	{5, "CHAOVOICE_BANK05" },
-	{7, "CHAO_BGM_BANK07" },
+	{7, "ALIFE_BANK07" },
 };
 
 SoundFileInfo ChaoSoundbanks2[] = {
@@ -14,7 +14,7 @@ SoundFileInfo ChaoSoundbanks2[] = {
 	{2, "CHECK_SHEET_BANK02" },
 	{4, "CHAOVOICE_BANK04" },
 	{5, "CHAOVOICE_BANK05" },
-	{7, "CHAO_BGM_BANK07" },
+	{7, "ALIFE_BANK07" },
 };
 
 SEFadeoutData FadeoutTable[] = {
@@ -42,11 +42,91 @@ SEDistanceOverride DistanceOverrideTable[] = {
 	{ SE_M3_NEEDLEROT, 50.0f, 500.0f, 0 },
 };
 
+ChaoSoundIDOverride ChaoSoundReplacements[] = {
+	{ 0x755474, SE_AL_21 }, //race cursor
+	{ 0x727B49, SE_AL_KOKE },
+	{ 0x727E19, SE_AL_PON },
+	{ 0x728257, SE_AL_PON },
+	{ 0x72829E, SE_AL_KOKE },
+	{ 0x72866A, SE_AL_PON },
+	{ 0x7286A4, SE_AL_KOKE },
+	{ 0x72C63B, SE_AL_HIRAMEKI },
+	{ 0x72C923, SE_AL_KOKE },
+	{ 0x72C94E, SE_AL_HIRAMEKI },
+	{ 0x72E2CE, SE_AL_START },
+	{ 0x72FF94, SE_AL_CAPTURE_KYUPIN },
+	{ 0x7398F5, SE_AL_CAPTURE_KYUKYU },
+	{ 0x73995C, SE_AL_CAPTURE_KYUPIN },
+	{ 0x73A858, SE_AL_PICK },
+	{ 0x73A9AC, SE_AL_FOOTSTEP_L },
+	{ 0x744095, SE_AL_SWIM },
+	{ 0x74424F, SE_AL_UMARERU },
+	{ 0x744381, SE_AL_PEN },
+	{ 0x744365, SE_AL_PEN },
+	{ 0x7443A0, SE_AL_KUJAKU },
+	{ 0x7443BF, SE_AL_TUBAME },
+	{ 0x7443DE, SE_AL_OUMU },
+	{ 0x7443FD, SE_AL_BANBI },
+	{ 0x744443, SE_AL_GORILLA },
+	{ 0x74443C, SE_AL_GORILLA },
+	{ 0x744486, SE_AL_LION },
+	{ 0x74447F, SE_AL_LION },
+	{ 0x7444A2, SE_AL_ZOU },
+	{ 0x74454D, SE_AL_DOPUN },
+	{ 0x745EC5, SE_AL_PON },
+	{ 0x745F11, SE_AL_KOKE },
+	{ 0x745EED, SE_AL_KOKE },
+	{ 0x746522, SE_AL_KOKE },
+	{ 0x7464F7, SE_AL_PON },
+	{ 0x748FE4, SE_AL_KOKE },
+	{ 0x748F9F, SE_AL_PON },
+	{ 0x748FB6, SE_AL_KOKE },
+	{ 0x748F6C, SE_AL_PON },
+	{ 0x7484AE, SE_AL_HIRAMEKI },
+	{ 0x74852D, SE_AL_KOKE },
+	{ 0x74BB35, SE_AL_PON },
+	{ 0x74BB97, SE_AL_KOKE },
+	{ 0x74C85F, SE_AL_KOKE },
+	{ 0x74C89A, SE_AL_HIRAMEKI },
+	{ 0x74D8A4, SE_AL_KOKE },
+	{ 0x74D8D7, SE_AL_HIRAMEKI },
+	{ 0x754CD1, SE_AL_FLY },
+	{ 0x754CCA, SE_AL_SWIM },
+	{ 0x754CC3, SE_AL_EAT },
+	{ 0x7558DF, SE_AL_PICK },
+	{ 0x755961, SE_AL_RAPPA2 },
+	{ 0x7559A1, SE_AL_RAPPA2 },
+	{ 0x755C37, SE_AL_KOKE },
+	{ 0x756432, SE_AL_UMARERU },
+	{ 0x756B33, SE_AL_DOPUN }, //Wrong??
+	{ 0x75AAC3, SE_AL_EAT },
+	{ 0x7612F9, SE_AL_AGOGOBELL },
+	{ 0x76151D, SE_AL_TAIKO },
+	{ 0x761631, SE_AL_FUE },
+	{ 0x7617DD, SE_AL_BONGO }, //Should've been castanets though
+	{ 0x7617FB, SE_AL_BONGO }, //Should've been castanets though
+	{ 0x761926, SE_AL_RAPPA2 },
+	{ 0x761AB8, SE_AL_THINBAL },
+	{ 0x761C36, SE_AL_TAMBOURINE },
+	{ 0x7621B7, SE_AL_49 }, //Goo
+	{ 0x76422C, SE_AL_PHOO },
+	{ 0x76432E, SE_AL_47 }, //Fire
+	{ 0x76EA5E, SE_AL_RAKUGAKI },
+	{ 0x76EA5E, SE_AL_RAKUGAKI },
+	//{ 0x739EA3, SE_CH_V29 },
+	//{ 0x739FFF, SE_CH_V56 }, //eating normal
+	//{ 0x73A031, SE_CH_V56 }, //eating hungry
+	//{ 0x73A0BC, SE_CH_V56 }, //eating hungry
+	//{ 0x73A08D, SE_CH_V56 }, //eating normal
+};
+
 //Config stuff
 bool BoaBoaFix = true;
 bool ClassicRingPan = true;
 bool FadeOutEnabled = true;
 bool DelayedSoundsEnabled = true;
+bool ReplaceChaoSounds = true;
+bool EnableChaoBGSounds = false;
 int MovieVolumeSO = 100;
 int MovieVolume_Real = 0;
 int MusicVolumeBoost = 5100;
@@ -422,6 +502,48 @@ signed int PerfectChaosFix(SoundIDs sound_id, EntityData1* entity, int pri, int 
 	return PlaySound_Timer(sound_id, entity, pri, volume, 600);
 }
 
+static void __cdecl MRGarden_Main_r(ObjectMaster* a1);
+static Trampoline MRGarden_Main_t(0x718C30, 0x718C35, MRGarden_Main_r);
+static void __cdecl MRGarden_Main_r(ObjectMaster* a1)
+{
+	auto original = reinterpret_cast<decltype(MRGarden_Main_r)*>(MRGarden_Main_t.Target());
+	if (EnableChaoBGSounds)
+	{
+		PlaySound_Timer(SE_CH_BEACH, a1->Data1, 8, 100, 100); //Mushi
+		a1->Data1->Position = { 31.5f, 18.0f, -101.25f };
+		PlaySound_Positional_Timer(SE_CH_SPRING, a1->Data1, 0, 0, 100, 31.5f, 18.0f, -101.25f);
+	}
+	original(a1);
+}
+
+static void __cdecl ECGarden_Main_r(ObjectMaster* a1);
+static Trampoline ECGarden_Main_t(0x718FD0, 0x718FD5, ECGarden_Main_r);
+static void __cdecl ECGarden_Main_r(ObjectMaster* a1)
+{
+	auto original = reinterpret_cast<decltype(ECGarden_Main_r)*>(ECGarden_Main_t.Target());
+	if (EnableChaoBGSounds)
+	{
+		PlaySound_Timer(SE_CH_HOGE7, a1->Data1, 8, 100, 100); //Beach
+		a1->Data1->Position = { -33.75f, 59.625f, 7.875f };
+		PlaySound_Positional_Timer(SE_CH_HOGE6, a1->Data1, 0, 0, 100, -33.75f, 59.625f, 7.875f); //Radar
+	}
+	original(a1);
+}
+
+void PlayChaoRaceCheer(MusicIDs id)
+{
+	if (CurrentSong != id)
+	{
+		if (Music_Enabled)
+		{
+			CurrentSong = id;
+			LastSong2 = id;
+			LastSong = id;
+		}
+	}
+	PlaySound_Timer(SE_CH_HOGE5, NULL, 8, 100, 1000);
+}
+
 extern "C"
 {
 	__declspec(dllexport) void __cdecl Init(const char* path, const HelperFunctions &helperFunctions)
@@ -438,6 +560,8 @@ extern "C"
 		BoaBoaFix = config->getBool("General", "BoaBoaFix", true);
 		ClassicRingPan = config->getBool("General", "ClassicRingPan", true);
 		FadeOutEnabled = config->getBool("General", "FadeOutEnabled", true);
+		ReplaceChaoSounds = config->getBool("General", "ReplaceChaoSounds", true);
+		EnableChaoBGSounds = config->getBool("General", "EnableChaoBGSounds", false);
 		DelayedSoundsEnabled = config->getBool("General", "DelayedSounds", true);
 		MusicVolumeBoost = config->getInt("Volume", "MusicVolumeBoost", 5100);
 		VoiceVolumeBoost = config->getInt("Volume", "VoiceVolumeBoost", 5100);
@@ -446,6 +570,32 @@ extern "C"
 		VoiceVolumeConv = CalculateVolume_SADXStyle(GetPrivateProfileIntA("sonicDX", "voicev", 100, ".\\sonicDX.ini"), 1) + VoiceVolumeBoost;
 		MovieVolume_Real = ConvertLinearToDirectX(MovieVolumeSO, 100);
 		WriteData((int**)0x005140DF, &MovieVolume_Real);
+		//Chao stuff
+		if (ReplaceChaoSounds)
+		{
+			ChaoSoundbanks[1].Filename = "ALIFE_BANK01";
+			//ChaoSoundbanks[3].Filename = "ALIFE_BANK05"; //the first voice bank (bank 4 in DX) is replaced with background sounds (bank 5 on DC)
+			//ChaoSoundbanks[4].Filename = "ALIFE_BANK04"; //the second voice bank (bank 5 in DX) is replaced with SA1 voices (bank 4 on DC)
+			//ChaoSoundbanks2[2].Filename = "ALIFE_BANK05";
+			//ChaoSoundbanks2[3].Filename = "ALIFE_BANK04";
+			SoundLists[61].List = ChaoSoundbanks;
+			SoundLists[61].Count = 6;
+			SoundLists[2].List = ChaoSoundbanks2; //Might be unused
+			SoundLists[2].Count = 5;
+			for (int i = 0; i < LengthOfArray(ChaoSoundReplacements); i++)
+			{
+				WriteData((__int16*)(ChaoSoundReplacements[i].address+1), ChaoSoundReplacements[i].id);
+			}
+			WriteData((__int16*)0x72FDBA, (__int16)SE_AL_TAIKO);
+			WriteData((__int16*)0x72FDC3, (__int16)SE_AL_RAPPA);
+			WriteData((__int16*)0x72FDCC, (__int16)SE_AL_FUE);
+			WriteData((__int16*)0x72FDD5, (__int16)SE_AL_THINBAL);
+			WriteData((__int16*)0x72FDDE, (__int16)SE_AL_AGOGOBELL);
+			WriteData((__int16*)0x72FDE7, (__int16)SE_AL_TAMBOURINE);
+			WriteData((__int16*)0x72FDF0, (__int16)SE_AL_BONGO);
+			WriteData((__int16*)0x72FDF9, (__int16)SE_AL_SUZU);
+		}
+		WriteCall((void*)0x72E618, PlayChaoRaceCheer);
 		//General changes
 		WriteData((void**)0x410AE8, (void*)0x88AC34); //Enable full HRTF mode
 		WriteData((void**)0x410CBC, (void*)0x88AC34); //Enable full HRTF mode
@@ -538,10 +688,6 @@ extern "C"
 		WriteData<1>((char*)0x5EAE93, 0x50); //HebiGate sound fix
 		WriteData<5>((char*)0x5EC440, 0x90u); //Remove SE_LW_POLE sound
 		//Fixes for missing/wrong soundbanks
-		SoundLists[61].List = ChaoSoundbanks;
-		SoundLists[61].Count = 6;
-		SoundLists[2].List = ChaoSoundbanks2; //Might be unused
-		SoundLists[2].Count = 5;
 		SoundList_HotShelter[3].Filename = "FINAL_EGG_BANK04";
 		WriteCall((void*)0x4B34E4, ZeroNameSoundFix);
 		WriteData((short*)0x00566CC9, (short)SE_ER_ITE); //E101 boss

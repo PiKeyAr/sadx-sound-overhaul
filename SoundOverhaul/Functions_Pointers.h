@@ -7,6 +7,7 @@ DataPointer(int, FramerateSetting_Config, 0x0089295C);
 DataPointer(int, FramerateSetting, 0x0389D7DC);
 DataPointer(int, TimerValue_PlaySound_Positional_StandardTimer, 0x004250AE);
 DataPointer(int, VoiceVolumeBK, 0x3ABDF90);
+DataPointer(int, LastSong2, 0x9126A4);
 DataArray(SoundEntry, SoundQueue, 0x3B292F8, 36);
 FunctionPointer(ObjectMaster*, Cutscene_PlaySoundWithPitch, (int a1, int a2, int a3), 0x64FD00);
 FunctionPointer(int, StopSound, (int id), 0x424210);
