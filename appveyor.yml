@@ -18,7 +18,7 @@ cache:
 
 init:
 - ps: mkdir C:\SoundOverhaul
-- ps: Set-Content -Value "Name=Sound Overhaul 2`r`nDescription=Replaces ingame sound effects with sounds ripped from the Dreamcast version. Restores missing sounds and fixes several sound bugs.`r`nAuthor=PkR`r`nVersion=$env:APPVEYOR_BUILD_VERSION`r`nDLLFile=SoundOverhaul.dll`r`nUpdateUrl=http://dcmods.unreliable.network/owncloud/data/PiKeyAr/files/SoundOverhaul/`r`nChangelogUrl=http://dcmods.unreliable.network/owncloud/data/PiKeyAr/files/Changelog.txt" -Path C:\SoundOverhaul\mod.ini
+- ps: Set-Content -Value "Name=Sound Overhaul 3`r`nDescription=Improves volume handling, restores missing sounds and fixes sound bugs. Replaces sound effects with high quality Dreamcast rips.`r`nAuthor=PkR & TheLegendOfXela`r`nVersion=$env:APPVEYOR_BUILD_VERSION`r`nDLLFile=sadx-sound-overhaul.dll`r`nUpdateUrl=http://dcmods.unreliable.network/owncloud/data/PiKeyAr/files/SoundOverhaul/`r`nChangelogUrl=http://dcmods.unreliable.network/owncloud/data/PiKeyAr/files/Changelog.txt" -Path C:\SoundOverhaul\mod.ini
 - cmd: choco install wget --version 1.20
 - cmd: cd \
 - cmd: wget -np --no-parent -nH --cut-dirs 4 -nc "https://dcmods.unreliable.network/owncloud/data/PiKeyAr/files/Various/mod-manifest-gen.exe"
