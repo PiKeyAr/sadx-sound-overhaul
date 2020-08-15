@@ -12,8 +12,6 @@ Alternatively you could install Sound Overhaul manually by downloading the lates
 
 **Latest development build:** https://ci.appveyor.com/api/projects/PiKeyAr/sadx-sound-overhaul/artifacts/bin/SoundOverhaul.7z 
 
-Developer's Twitter: https://twitter.com/pkr_sadx
-
 **Related mods:**
 
 Dreamcast Conversion: https://github.com/PiKeyAr/sadx_dreamcast
