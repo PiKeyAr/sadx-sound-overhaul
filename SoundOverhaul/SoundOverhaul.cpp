@@ -643,6 +643,7 @@ extern "C"
 			//WriteCall((void*)0x55EF8E, StopSound_Fade); //Fade out Super Sonic's on water sound 1
 		}
 		//Various looping/timing/cutoff fixes
+		WriteData<1>((char*)0x621770, 2); // Prevent the Merry-Go-Round sound from being cut off by 3D sounds
 		WriteCall((void*)0x4E26D9, PlaySound_StandardTimer_Delay); //Gamma destroying bridge in Windy Valley
 		WriteCall((void*)0x561A36, PerfectChaosRoar);
 		WriteCall((void*)0x561FE7, PerfectChaosRoar);
