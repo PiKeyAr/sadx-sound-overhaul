@@ -544,6 +544,11 @@ void PlayChaoRaceCheer(MusicIDs id)
 	PlaySound_Timer(SE_CH_HOGE5, NULL, 8, 100, 1000);
 }
 
+void GammaTargetPositional(SoundIDs ID, EntityData1* entity, int pri, int volume)
+{
+	PlaySound_Positional_StandardTimer(ID, entity, pri, -50, EntityData1Ptrs[0]->Position.x, EntityData1Ptrs[0]->Position.y, EntityData1Ptrs[0]->Position.z);
+}
+
 extern "C"
 {
 	__declspec(dllexport) void __cdecl Init(const char* path, const HelperFunctions &helperFunctions)
@@ -662,6 +667,7 @@ extern "C"
 		WriteData<1>((char*)0x5FC50A, 0x4Bu); //Sky Deck big cannon fire delay
 		WriteData<1>((char*)0x5F3DB7, 0x4Bu); //Sky Deck big cannon fire delay
 		WriteCall((void*)0x5F5FAF, AlarmFix); //Alarm in Sky Deck 2
+		WriteCall((void*)0x4C4E5B, GammaTargetPositional); //Make Gamma's target sound positional
 		WriteCall((void*)0x55BEC7, FreezerFix); //Chaos 6 freezer
 		WriteData<1>((char*)0x5B7518, 0x30u); //Final Egg 3 fan timer
 		WriteCall((void*)0x5568B1, StopSound_Fade); //Chaos 4 attack
